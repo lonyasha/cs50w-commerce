@@ -1,0 +1,114 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <div class="container-fluid">
+        <div class="row justify-content-between">
+            <div class="col">
+                <h2>Listing: {{ listing.title }}</h2>
+            </div>
+            <div class="col auction-btn">
+                 {% if user.is_authenticated and listing.active %}
+                        <form method="post">
+                            {% csrf_token %}
+                            {% if in_watchlist %}
+                                <button type="submit" name="remove_from_watchlist" class="btn btn-outline-dark">Remove from Watchlist</button>
+                            {% else %}
+                                <button type="submit" name="add_to_watchlist" class="btn btn-outline-light">Add to Watchlist</button>
+                            {% endif %}
+                        </form>
+                 {% endif %}
+                {% if user_is_creator and listing.active %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" name="close_auction" class="btn btn-outline-dark">Close Auction</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+        <div class="main">
+            <div class="row justify-content-center ">
+                {% if user_is_winner %}
+                    <p class="alert alert-success alert-heading">Congratulations! You have won this auction!</p>
+                {% elif not user_is_creator and not user_is_winner and not listing.active %}
+                    <p class="alert alert-secondary">Unfortunately, auction was closed.</p>
+                {% endif %}
+            </div>
+            <div class="row">
+                <div class="col-4">
+                    {% if listing.image %}
+                        <img src="{{ listing.image }}" alt="Image of {{ listing.title }}" class="img-fluid listing-img">
+                    {% endif %}
+                </div>
+                <div class="col-8">
+                    <div class="row">
+                        <p>{{ listing.description }}</p>
+                    </div>
+                    <div class="row justify-content-start">
+                        <div class="col-2"><p>Listed by <strong>{{ listing.creator.username }}</strong></p></div>
+                        <div class="col-2"><p>Category: <strong>{{ listing.category.name }}</strong></p></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-4 bid-clmn">
+                            {% if listing.active %}
+                                <h3>${{ listing.start_bid }}</h3>
+                                {% if user.is_authenticated %}
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        {{ bid_form.as_p }}
+                                        <button type="submit" name="place_bid" class="btn btn-outline-light">Submit bid</button>
+                                    </form>
+                                {% endif %}
+                            {% else %}
+                                <h3>It was sold to {{ listing.winning_bid.bidder.username }} for ${{ listing.winning_bid.offer }}</h3>
+                            {% endif %}
+
+                        </div>
+                        <div class="col-8">
+                            {% if user.is_authenticated and listing.active %}
+                                {% if messages %}
+                                    <ul class="messages">
+                                        {% for message in messages %}
+                                            <li{% if message.tags %} class="{{ message.tags }} alert alert-secondary msg"{% endif %}>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2" viewBox="0 0 16 16" role="img" aria-label="Warning:">
+                                                    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                                                </svg>
+                                                <div>{{ message }}</div>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            {% elif user.is_authenticated and not listing.active %}
+                                <h4>Comments</h4>
+                                <ul class="comments">
+                                    {% for comment in listing.comments.all %}
+                                        <li><strong>{{ comment.user.username }}</strong>: {{ comment.text }}</li>
+                                    {% empty %}
+                                        <li>No comments yet.</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <div class="msg-ua"><p class="alert alert-secondary">You must be logged in to place bids, add comments, or manage the watchlist.</p></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% if user.is_authenticated and listing.active %}
+                <h3 class="com-title">Comments</h3>
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ comment_form.as_p }}
+                        <button type="submit" name="add_comment" class="btn btn-outline-light">Add Comment</button>
+                    </form>
+                    <ul class="comments">
+                        {% for comment in listing.comments.all %}
+                            <li><strong>{{ comment.user.username }}</strong>: {{ comment.text }}</li>
+                        {% empty %}
+                            <li>No comments yet.</li>
+                        {% endfor %}
+                    </ul>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}

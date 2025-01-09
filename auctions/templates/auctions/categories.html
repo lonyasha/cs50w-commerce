@@ -1,0 +1,9 @@
+{% extends "auctions/layout.html" %}
+{% load category_tags %}
+
+{% block body %}
+    <h2>Categories</h2>
+
+    {% category_list %}
+    
+{% endblock %}
